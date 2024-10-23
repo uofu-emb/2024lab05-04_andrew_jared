@@ -4,6 +4,7 @@ add_executable(task_delay
     rtc.c
     sleep.c
     timer.c
+    gpio_interrupt.c
     )
 # Building Task Delay 
 # Modify the below lines to enable/disable output over UART/USB.
@@ -46,6 +47,15 @@ target_link_libraries(timer PRIVATE
 )
 pico_add_extra_outputs(timer)
 add_custom_target(flash_delay picotool load -f $<TARGET_FILE:timer> DEPENDS timer)
+
+#Building gpio_interrupt
+pico_enable_stdio_uart(gpio_interrupt 0)
+pico_enable_stdio_usb(gpio_interrupt 1)
+target_link_libraries(gpio_interrupt PRIVATE
+  pico_stdlib
+)
+pico_add_extra_outputs(gpio_interrupt)
+add_custom_target(flash_delay picotool load -f $<TARGET_FILE:gpio_interrupt> DEPENDS gpio_interrupt)
 
 
 # The CYW43 is the Wifi/Bluetooth module. If the board is set to pico_w, this

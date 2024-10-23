@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <pico/stdlib.h>
 #include <pico/sync.h>
+#include "global.h"
 
 int toggle = 1;
 void irq_callback(uint gpio, uint32_t event_mask)
