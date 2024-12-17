@@ -141,3 +141,100 @@ Measure the latency of an interrupt handler.
 
 # Reference implementation
 A working reference implementation is available here https://github.com/uofu-emb/rtos.05
+
+I made this protocol based off the prelab, instruction for measurements on the oscilloscope, and each of the .c files and the CMakeLists.txt.
+
+### **Testing Protocol and Pin Connections**
+
+Here is the complete protocol for testing your system and measuring **jitter**, **drift**, and **latency** using the **R&S RTM3004 Oscilloscope**. This includes the necessary steps for connecting pins and verifying outputs.
+
+---
+
+### **Programs and Pin Connections**
+
+1. **`task_delay.c`**, **`timer.c`**, **`sleep.c`**:
+   - **Purpose**: Measure timing jitter and drift for different delay methods.
+   - **Output Pin**: Use **GPIO Pin 25** (the onboard LED pin) to toggle an output signal.
+
+   | **Program**        | **Output Pin** | **Description**                              |
+   |--------------------|---------------|--------------------------------------------|
+   | `task_delay.c`     | GPIO 25       | Delays using FreeRTOS task delay.           |
+   | `timer.c`          | GPIO 25       | Delays using hardware timer interrupts.     |
+   | `sleep.c`          | GPIO 25       | Delays using `sleep_ms()` function.         |
+
+2. **`gpio_interrupt.c`**:
+   - **Purpose**: Measure interrupt handler latency and jitter.
+   - **Input Pin**: Use **GPIO Pin 2** as the interrupt input pin.
+   - **Output Pin**: Use **GPIO Pin 25** to toggle an output signal.
+
+   | **Program**        | **Input Pin** | **Output Pin** | **Description**                          |
+   |--------------------|--------------|---------------|------------------------------------------|
+   | `gpio_interrupt.c` | GPIO 2       | GPIO 25       | Toggles output on interrupt (rising edge).|
+
+---
+
+### **Testing Protocol**
+
+#### **1. Measuring Timing Jitter and Drift**
+   - Run each program sequentially: `task_delay`, `timer`, and `sleep`.
+   - **Setup**:
+     1. Connect **GPIO Pin 25** to **Channel 1** of the oscilloscope.
+     2. Use the following oscilloscope configuration:
+        - **Source**: Channel 1.
+        - **Measurement Settings**:
+          - Add measurements: `Period`, `Frequency`, and `Duty Cycle`.
+          - Enable **Statistics** for `Min`, `Max`, `Mean`, and `StdDev`.
+     3. Observe jitter and drift over time:
+        - Capture the output for **1 minute** to analyze short-term jitter.
+        - Capture data over **1 hour** to measure long-term drift.
+
+   - **Busy Wait Test**:
+     - For each program, the GPIO toggle already includes a busy wait loop.
+     - Compare jitter **with and without** the busy wait by commenting/uncommenting the loop.
+
+---
+
+#### **2. Measuring Interrupt Latency**
+   - Run **`gpio_interrupt.c`** to measure the latency of the GPIO interrupt handler.
+   - **Setup**:
+     1. Connect a **1 kHz square wave signal** from the **function generator** to **GPIO Pin 2**.
+        - Use the **Sync Output** of the generator for oscilloscope triggering.
+     2. Connect:
+        - **Sync Output** (from generator) → **Channel 2** (oscilloscope).
+        - **GPIO Pin 25** → **Channel 1** (oscilloscope).
+     3. Configure oscilloscope:
+        - **Trigger** on Channel 2 (rising edge).
+        - Measure the **time delay** between:
+          - Channel 2 (input signal to GPIO 2).
+          - Channel 1 (GPIO 25 toggling output).
+
+   - **Busy Wait Test**:
+     - Increase the delay using the busy wait loop already in the interrupt handler:
+       ```c
+       for (volatile int i = 0; i < 100000; i++);
+       ```
+     - Measure and compare the latency **before** and **after** adding the busy wait.
+
+---
+
+### **Final Connections Summary**
+
+| **Signal**                  | **Pin/Connection**         | **Oscilloscope Channel** |
+|-----------------------------|----------------------------|--------------------------|
+| GPIO Output (toggle signal) | GPIO 25                   | Channel 1               |
+| Interrupt Input             | GPIO 2                    | Channel 2               |
+| Sync Output                 | Function Generator (Sync) | Channel 2 (Trigger)     |
+
+---
+
+### **Steps to Save and Analyze Data**  
+1. **Capture Data**:
+   - Press **"Run Stop"** on the oscilloscope to freeze the waveform.
+   - Save the waveform data:
+     - **Save Load → Waveforms**.
+     - Set **Points** to **Display Data**.
+     - Export to CSV for further analysis.
+
+2. **Compare Results**:
+   - Use the statistics (`Min`, `Max`, `Mean`, `StdDev`) for jitter analysis.
+   - Compare interrupt latency with and without the busy wait loop.
