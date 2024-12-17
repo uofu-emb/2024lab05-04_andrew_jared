@@ -4,29 +4,26 @@
 #include "global.h"
 
 int toggle = 1;
-void irq_callback(uint gpio, uint32_t event_mask)
-{
-    if (gpio != IN_PIN) return;
-    toggle = !toggle;
-    if (event_mask & GPIO_IRQ_EDGE_RISE) {
-        gpio_put(OUT_PIN, true);
-    } else if (event_mask & GPIO_IRQ_EDGE_FALL) {
-        gpio_put(OUT_PIN, false);
-    }
+void gpio_callback(uint gpio, uint32_t events) {
+    gpio_put(LED_PIN, !gpio_get(LED_PIN));  // Toggle LED
+
+    // Busy wait for jitter measurement
+    for (volatile int i = 0; i < 100000; i++);
 }
 
-int main(void)
-{
-    stdio_init_all();
+int main() {
+    gpio_init(LED_PIN);
+    gpio_set_dir(LED_PIN, GPIO_OUT);
+    gpio_put(LED_PIN, 0);
 
-    gpio_init(IN_PIN);
-    gpio_set_dir(IN_PIN, GPIO_IN);
+    gpio_init(INTERRUPT_PIN);
+    gpio_set_dir(INTERRUPT_PIN, GPIO_IN);
+    gpio_pull_down(INTERRUPT_PIN);
 
-    gpio_init(OUT_PIN);
-    gpio_set_dir(OUT_PIN, GPIO_OUT);
-    gpio_put(OUT_PIN, toggle);
+    gpio_set_irq_enabled_with_callback(INTERRUPT_PIN, GPIO_IRQ_EDGE_RISE, true, &gpio_callback);
 
-    gpio_set_irq_enabled_with_callback(IN_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL , true, irq_callback);
-    while(1) __wfi();
+    while (1) {
+        tight_loop_contents();
+    }
     return 0;
 }
