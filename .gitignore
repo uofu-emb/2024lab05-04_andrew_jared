@@ -17,6 +17,10 @@ bld/
 [Ll]og/
 [Ll]ogs/
 
+# Build files 
+
+build/
+
 # Visual Studio 2015/2017 cache/options directory
 .vs/
 
