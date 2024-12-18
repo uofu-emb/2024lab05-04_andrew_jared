@@ -1,3 +1,12 @@
+# Initialize the Pico SDK
+set(PICO_SDK_PATH "$ENV{HOME}/.pico-sdk/sdk/2.0.0")
+include(${PICO_SDK_PATH}/pico_sdk_init.cmake)
+
+# Include FreeRTOS
+include(${CMAKE_CURRENT_LIST_DIR}/lib/freertos/portable/ThirdParty/GCC/RP2040/FreeRTOS_Kernel_import.cmake)
+
+
+
 # Define Task Delay executable
 add_executable(task_delay
     task_delay.c
